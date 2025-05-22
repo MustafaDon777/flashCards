@@ -68,10 +68,17 @@
             margin-top: 1rem;
             text-align: center;
         }
+        .index-display {
+            font-size: 1rem;
+            color: #e2e8f0;
+            margin-bottom: 1rem;
+            text-align: center;
+        }
     </style>
 </head>
 <body>
     <h1>Software Engineering Flashcards</h1>
+    <div class="index-display" id="indexDisplay"></div>
     <div class="card" id="cardContent">Loading...</div>
     <div class="button-group">
         <button id="flipButton" onclick="toggleCard()">Flip</button>
@@ -80,7 +87,6 @@
         <button onclick="randomCard()">Random</button>
     </div>
     <div id="errorMessage" class="error-message"></div>
-    <a href="ttsDonw.html" >go to tts downloader</a>
     <script>
         let flashcards = [];
         let currentIndex = 0;
@@ -132,8 +138,10 @@
             if (flashcards.length === 0) return;
             const cardElement = document.getElementById('cardContent');
             const flipButton = document.getElementById('flipButton');
+            const indexDisplay = document.getElementById('indexDisplay');
             cardElement.textContent = flashcards[index].question;
             flipButton.textContent = 'Flip to Answer';
+            indexDisplay.textContent = `Question ${index + 1} of ${flashcards.length}`;
             isFlipped = false;
         }
 
