@@ -1,0 +1,181 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Software Engineering Flashcards</title>
+    <style>
+        body {
+            background-color: #0c1a30;
+            color: #e2e8f0;
+            font-family: 'Arial', sans-serif;
+            min-height: 100vh;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            padding: 16px;
+        }
+        h1 {
+            font-size: 1.875rem;
+            font-weight: bold;
+            margin-bottom: 1.5rem;
+        }
+        .card {
+            width: 100%;
+            max-width: 600px;
+            height: 300px;
+            margin: 0 auto 1.5rem;
+            background-color: #364e77;
+            border-radius: 10px;
+            padding: 20px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            text-align: center;
+            box-shadow: 0 4px 8px rgba(0, 0, 0, 0.5);
+            overflow-y: auto;
+            font-family: Arial, Helvetica, sans-serif;
+            font-size: 1.5rem;
+        }
+        .button-group {
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            gap: 1rem;
+            margin-top: 1rem;
+            flex-wrap: wrap;
+        }
+        .button-group button {
+            background-color: #4a5568;
+            color: #e2e8f0;
+            padding: 10px 20px;
+            border: none;
+            border-radius: 5px;
+            cursor: pointer;
+            transition: background-color 0.3s, transform 0.2s;
+            font-size: 1rem;
+        }
+        .button-group button:hover {
+            background-color: #718096;
+            transform: translateY(-2px);
+        }
+        .button-group button:active {
+            transform: translateY(0);
+        }
+        .error-message {
+            color: #f87171;
+            margin-top: 1rem;
+            text-align: center;
+        }
+    </style>
+</head>
+<body>
+    <h1>Software Engineering Flashcards</h1>
+    <div class="card" id="cardContent">Loading...</div>
+    <div class="button-group">
+        <button id="flipButton" onclick="toggleCard()">Flip</button>
+        <button onclick="previousCard()">Previous</button>
+        <button onclick="nextCard()">Next</button>
+        <button onclick="randomCard()">Random</button>
+    </div>
+    <div id="errorMessage" class="error-message"></div>
+    <a href="ttsDonw.html" >go to tts downloader</a>
+    <script>
+        let flashcards = [];
+        let currentIndex = 0;
+        let isFlipped = false;
+
+        // Parse CSV data
+        function parseCSV(csv) {
+            const lines = csv.split('\n').filter(line => line.trim() !== '');
+            if (lines.length < 2) {
+                throw new Error('CSV file is empty or invalid');
+            }
+            const headers = lines[0].split(',');
+            if (headers[0].trim() !== 'Question' || headers[1].trim() !== 'Answer') {
+                throw new Error('CSV file must have "Question" and "Answer" headers');
+            }
+            const flashcards = [];
+            for (let i = 1; i < lines.length; i++) {
+                const [question, answer] = lines[i].split('","');
+                if (question && answer) {
+                    flashcards.push({
+                        question: question.replace(/^"/, '').trim(),
+                        answer: answer.replace(/"$/, '').trim()
+                    });
+                }
+            }
+            return flashcards;
+        }
+
+        // Load CSV file
+        async function loadCSV() {
+            try {
+                const response = await fetch('questions.csv');
+                if (!response.ok) {
+                    throw new Error('Failed to load questions.csv');
+                }
+                const csvText = await response.text();
+                flashcards = parseCSV(csvText);
+                if (flashcards.length === 0) {
+                    throw new Error('No valid flashcards found in CSV');
+                }
+                displayCard(currentIndex);
+            } catch (error) {
+                document.getElementById('errorMessage').textContent = `Error: ${error.message}`;
+                document.getElementById('cardContent').textContent = 'Failed to load flashcards';
+            }
+        }
+
+        function displayCard(index) {
+            if (flashcards.length === 0) return;
+            const cardElement = document.getElementById('cardContent');
+            const flipButton = document.getElementById('flipButton');
+            cardElement.textContent = flashcards[index].question;
+            flipButton.textContent = 'Flip to Answer';
+            isFlipped = false;
+        }
+
+        function toggleCard() {
+            if (flashcards.length === 0) return;
+            const cardElement = document.getElementById('cardContent');
+            const flipButton = document.getElementById('flipButton');
+            isFlipped = !isFlipped;
+            if (isFlipped) {
+                cardElement.textContent = flashcards[currentIndex].answer;
+                flipButton.textContent = 'Flip to Question';
+            } else {
+                cardElement.textContent = flashcards[currentIndex].question;
+                flipButton.textContent = 'Flip to Answer';
+            }
+        }
+
+        function nextCard() {
+            if (flashcards.length === 0) return;
+            currentIndex = (currentIndex + 1) % flashcards.length;
+            displayCard(currentIndex);
+        }
+
+        function previousCard() {
+            if (flashcards.length === 0) return;
+            currentIndex = (currentIndex - 1 + flashcards.length) % flashcards.length;
+            displayCard(currentIndex);
+        }
+
+        function randomCard() {
+            if (flashcards.length === 0) return;
+            const newIndex = Math.floor(Math.random() * flashcards.length);
+            if (newIndex !== currentIndex) {
+                currentIndex = newIndex;
+                displayCard(currentIndex);
+            } else {
+                randomCard(); // Try again if same card
+            }
+        }
+
+        // Load flashcards on page load
+        loadCSV();
+    </script>
+</body>
+</html>

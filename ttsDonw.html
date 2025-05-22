@@ -1,0 +1,243 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Text to Speech with Download</title>
+    <style>
+        body {
+            font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
+            background-color: #1a1a1a;
+            color: #e0e0e0;
+            max-width: 800px;
+            margin: 40px auto;
+            padding: 20px;
+            line-height: 1.6;
+        }
+        h1 {
+            color: #ffffff;
+            text-align: center;
+            font-size: 2.2rem;
+            margin-bottom: 30px;
+            text-shadow: 0 2px 4px rgba(0, 0, 0, 0.2);
+        }
+        textarea {
+            width: 100%;
+            height: 180px;
+            background-color: #2a2a2a;
+            color: #e0e0e0;
+            border: 1px solid #3a3a3a;
+            border-radius: 8px;
+            padding: 15px;
+            font-size: 1rem;
+            resize: none;
+            box-shadow: inset 0 2px 4px rgba(0, 0, 0, 0.3);
+            transition: border-color 0.3s;
+        }
+        textarea:focus {
+            outline: none;
+            border-color: #007bff;
+        }
+        select, input[type="range"] {
+            background-color: #2a2a2a;
+            color: #e0e0e0;
+            border: 1px solid #3a3a3a;
+            border-radius: 6px;
+            padding: 10px;
+            font-size: 1rem;
+            margin: 15px 0;
+            width: 100%;
+            box-sizing: border-box;
+            transition: border-color 0.3s;
+        }
+        select:focus, input[type="range"]:focus {
+            outline: none;
+            border-color: #007bff;
+        }
+        label {
+            display: block;
+            font-size: 1rem;
+            color: #b0b0b0;
+            margin-bottom: 8px;
+        }
+        input[type="range"] {
+            -webkit-appearance: none;
+            height: 8px;
+            background: #3a3a3a;
+            border-radius: 4px;
+        }
+        input[type="range"]::-webkit-slider-thumb {
+            -webkit-appearance: none;
+            width: 16px;
+            height: 16px;
+            background: #007bff;
+            border-radius: 50%;
+            cursor: pointer;
+            box-shadow: 0 2px 4px rgba(0, 0, 0, 0.3);
+        }
+        input[type="range"]::-moz-range-thumb {
+            width: 16px;
+            height: 16px;
+            background: #007bff;
+            border-radius: 50%;
+            cursor: pointer;
+            box-shadow: 0 2px 4px rgba(0, 0, 0, 0.3);
+        }
+        .controls {
+            display: flex;
+            gap: 15px;
+            justify-content: center;
+            margin-top: 20px;
+        }
+        button {
+            background-color: #007bff;
+            color: #ffffff;
+            border: none;
+            padding: 12px 24px;
+            font-size: 1rem;
+            border-radius: 6px;
+            cursor: pointer;
+            transition: background-color 0.3s, transform 0.2s;
+            box-shadow: 0 2px 6px rgba(0, 0, 0, 0.4);
+        }
+        button:hover {
+            background-color: #0056b3;
+            transform: translateY(-2px);
+        }
+        button:active {
+            transform: translateY(0);
+        }
+        #status {
+            margin-top: 20px;
+            text-align: center;
+            color: #b0b0b0;
+            font-size: 0.9rem;
+        }
+        @media (max-width: 600px) {
+            body {
+                margin: 20px;
+                padding: 15px;
+            }
+            h1 {
+                font-size: 1.8rem;
+            }
+            .controls {
+                flex-direction: column;
+                gap: 10px;
+            }
+        }
+    </style>
+</head>
+<body>
+    <h1>Text to Speech Converter</h1>
+    <textarea id="textInput" placeholder="Enter text to convert to speech..."></textarea>
+    <div>
+        <label for="voiceSelect">Select Voice:</label>
+        <select id="voiceSelect"></select>
+    </div>
+    <div>
+        <label for="rateInput">Speech Speed: <span id="rateValue">1.0</span></label>
+        <input type="range" id="rateInput" min="0.5" max="2.0" step="0.1" value="1.0">
+    </div>
+    <div class="controls">
+        <button onclick="playSpeech()">Play Speech</button>
+        <button onclick="downloadSpeech()">Download as Audio</button>
+    </div>
+    <p id="status"></p>
+
+    <script>
+        const textInput = document.getElementById('textInput');
+        const voiceSelect = document.getElementById('voiceSelect');
+        const rateInput = document.getElementById('rateInput');
+        const rateValue = document.getElementById('rateValue');
+        const status = document.getElementById('status');
+        let voices = [];
+
+        // Load available voices
+        function loadVoices() {
+            voices = speechSynthesis.getVoices();
+            voiceSelect.innerHTML = '';
+            voices.forEach((voice, index) => {
+                const option = document.createElement('option');
+                option.value = index;
+                option.textContent = `${voice.name} (${voice.lang})`;
+                voiceSelect.appendChild(option);
+            });
+        }
+
+        // Populate voices when available
+        speechSynthesis.onvoiceschanged = loadVoices;
+        loadVoices(); // Initial load in case voices are already available
+
+        // Update speed value display
+        rateInput.addEventListener('input', () => {
+            rateValue.textContent = rateInput.value;
+        });
+
+        // Play the speech
+        function playSpeech() {
+            if (!textInput.value.trim()) {
+                status.textContent = 'Please enter some text.';
+                return;
+            }
+
+            const utterance = new SpeechSynthesisUtterance(textInput.value);
+            const selectedVoice = voices[voiceSelect.value];
+            utterance.voice = selectedVoice;
+            utterance.rate = parseFloat(rateInput.value);
+            utterance.onend = () => {
+                status.textContent = 'Speech finished.';
+            };
+            status.textContent = 'Playing speech...';
+            speechSynthesis.speak(utterance);
+        }
+
+        // Download the speech as audio
+        function downloadSpeech() {
+            if (!textInput.value.trim()) {
+                status.textContent = 'Please enter some text.';
+                return;
+            }
+
+            status.textContent = 'Generating audio...';
+            const utterance = new SpeechSynthesisUtterance(textInput.value);
+            const selectedVoice = voices[voiceSelect.value];
+            utterance.voice = selectedVoice;
+            utterance.rate = parseFloat(rateInput.value);
+
+            // Create an audio context to capture the output
+            const audioContext = new (window.AudioContext || window.webkitAudioContext)();
+            const destination = audioContext.createMediaStreamDestination();
+            const mediaRecorder = new MediaRecorder(destination.stream);
+            let chunks = [];
+
+            // Capture audio data
+            mediaRecorder.ondataavailable = (event) => {
+                chunks.push(event.data);
+            };
+
+            mediaRecorder.onstop = () => {
+                const blob = new Blob(chunks, { type: 'audio/webm' });
+                const url = URL.createObjectURL(blob);
+                const a = document.createElement('a');
+                a.href = url;
+                a.download = 'speech.webm';
+                a.click();
+                URL.revokeObjectURL(url);
+                status.textContent = 'Audio downloaded.';
+                audioContext.close();
+            };
+
+            // Start recording
+            mediaRecorder.start();
+
+            // Play the utterance through the audio context
+            const source = audioContext.createMediaStreamSource(destination.stream);
+            utterance.onend = () => {
+                mediaRecorder.stop();
+            };
+            speechSynthesis.speak(utterance);
+        }
+    </script>
+</body>
+</html>
